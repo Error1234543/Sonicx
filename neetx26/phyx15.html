@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PHY12THCH4WS4</title>
+
+<style>
+@font-face {
+  font-family: 'DevLys 010';
+  src: url('https://appxcontent.kaxa.in/fonts/DevLys010.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Kruti Dev 010';
+  src: url('https://appxcontent.kaxa.in/fonts/KrutiDev010.ttf') format('truetype');
+}
+[style*="DevLys"], [style*="Kruti"], .devlys {
+  font-family: 'DevLys 010', 'Kruti Dev 010', sans-serif !important;
+}
+
+:root {
+  --p1:#6f00ff;
+  --p2:#9c27b0;
+  --bg:#f6f8fb;
+  --card:#fff;
+  --text:#111;
+  --nav-height:80px;
+}
+[data-theme="dark"] {
+  --bg:#0b0620;
+  --card:#18122b;
+  --text:#e6e1f6;
+}
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  margin:0;
+  padding-bottom:calc(var(--nav-height) + 40px);
+  transition:background .3s,color .3s;
+}
+.container{max-width:1100px;margin:auto;padding:16px;}
+.header{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:16px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.1);flex-wrap:wrap;gap:10px;}
+.header-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.brand-badge{background:linear-gradient(90deg,var(--p1),var(--p2));color:white;padding:6px 12px;border-radius:10px;font-weight:bold;}
+.title-text{font-weight:700;font-size:18px;color:var(--text);}
+#themeToggle,#fullscreenBtn{transition:transform .2s;}
+#themeToggle:hover,#fullscreenBtn:hover{transform:scale(1.1);}
+
+.question{margin:20px 0;font-size:18px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:12px;margin-bottom:90px;padding-bottom:30px;}
+.option{padding:12px;border:1px solid #ccc;border-radius:10px;cursor:pointer;background:var(--card);transition:.2s;}
+.option.selected{background:linear-gradient(90deg,var(--p1),var(--p2));color:white;}
+.option:hover{transform:translateY(-2px);}
+.navigation{position:fixed;bottom:0;left:0;right:0;background:var(--card);display:flex;gap:10px;justify-content:space-between;padding:10px;z-index:10;box-shadow:0 -3px 10px rgba(0,0,0,.1);}
+.navigation button{flex:1;border:none;border-radius:8px;padding:12px;font-weight:bold;cursor:pointer;}
+.prev{background:#6b7280;color:white;}
+.next{background:linear-gradient(90deg,var(--p1),var(--p2));color:white;}
+.submit{background:#00c853;color:white;}
+.bookmark-btn{background:var(--card);border:2px solid #ccc;padding:6px 12px;border-radius:8px;cursor:pointer;color:var(--text);transition:.2s;}
+.bookmark-btn:hover{border-color:var(--p2);}
+.bookmark-btn.active{background:#ffeb3b;border-color:#fbc02d;color:#111;}
+.palette-fab{position:fixed;right:16px;bottom:100px;width:56px;height:56px;border-radius:50%;background:linear-gradient(90deg,var(--p1),var(--p2));color:white;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+.palette-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:99;}
+.question-palette{position:fixed;right:-100%;top:0;width:420px;max-width:92%;height:100%;background:var(--card);transition:right .3s;overflow:hidden;z-index:100;display:flex;flex-direction:column;}
+.question-palette.active{right:0;}
+.palette-header{padding:16px;background:linear-gradient(90deg,var(--p1),var(--p2));color:white;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;height:60px;box-sizing:border-box;}
+.palette-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;padding:16px;padding-bottom:60px;overflow-y:scroll !important;overflow-x:hidden;height:calc(100% - 60px);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative;touch-action:pan-y;}
+.palette-btn{padding:10px;border-radius:6px;border:none;background:#eee;cursor:pointer;font-weight:bold;position:relative;color:#111;}
+.palette-btn.current{background:var(--p1);color:white;}
+.palette-btn.answered{background:#00c853;color:white;}
+.palette-btn.bookmarked::after{content:"📑";position:absolute;top:2px;right:3px;font-size:13px;}
+@media(max-width:600px){
+  .question-palette{max-width:85%;}
+  .palette-grid{grid-template-columns:repeat(7,1fr);gap:3px;padding:6px;padding-bottom:50px;height:calc(100% - 44px);}
+  .palette-btn{padding:4px 2px;font-size:10px;border-radius:3px;min-height:28px;}
+  .palette-btn.bookmarked::after{font-size:8px;top:-1px;right:0px;}
+  .palette-header{padding:6px 10px;height:44px;}
+  .palette-header h3{font-size:13px;margin:0;line-height:1;}
+  .palette-header button{font-size:16px;padding:2px;}
+}
+.result-section{background:var(--card);padding:20px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-top:20px;}
+.correct{background:#e6f7ee;border-color:#00c853;}
+.wrong{background:#ffeaea;border-color:#ff1744;}
+@media print {
+  body { background:white; color:black; }
+  .navigation, .palette-fab, .header, .question-palette { display:none !important; }
+  .question-block { page-break-after: always; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <div class="brand-badge">firephysics</div>
+      <div class="title-text">PHY12THCH4WS4</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div id="timer" style="font-size:18px;font-weight:700;color:var(--p2);min-width:80px;text-align:center;">00:00:00</div>
+      <button id="fullscreenBtn" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--p2);padding:6px;">⛶</button>
+      <button id="themeToggle" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--p2);padding:6px;font-weight:600;">Mode</button>
+    </div>
+  </div>
+
+  <div id="quizSection">
+    <h3 id="questionNumber">Question 1</h3>
+    <button class="bookmark-btn" id="bookmarkBtn">🔖 Bookmark</button>
+    <div class="question" id="questionText">Loading...</div>
+    <div class="options" id="optionsContainer"></div>
+  </div>
+
+  <div id="resultSection" class="result-section" style="display:none;"></div>
+</div>
+
+<div class="navigation">
+  <button class="prev" id="prevBtn">← Previous</button>
+  <button class="next" id="nextBtn">Next →</button>
+  <button class="submit" id="submitBtn" style="display:none;">Submit</button>
+</div>
+
+<div class="palette-fab" id="paletteFab">📋</div>
+<div class="palette-overlay" id="paletteOverlay"></div>
+<div class="question-palette" id="questionPalette">
+  <div class="palette-header">
+    <h3 style="margin:0;">Question Palette</h3>
+    <button id="paletteClose" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;">✕</button>
+  </div>
+  <div class="palette-grid" id="paletteGrid"></div>
+</div>
+
+<script>
+const JSON_URL = "https://appxcontent.kaxa.in/test_title_question/firephysics_db/305/305_questions0.5635376855241343.json";
+let questions = [], answers = {}, bookmarks = new Set(), current = 0;
+let startTime = Date.now();
+let timerInterval;
+
+function $ (id) { return document.getElementById(id); }
+
+function updateTimer() {
+  const elapsed = Date.now() - startTime;
+  const hours = Math.floor(elapsed / 3600000);
+  const minutes = Math.floor((elapsed % 3600000) / 60000);
+  const seconds = Math.floor((elapsed % 60000) / 1000);
+  $('timer').textContent = 
+    String(hours).padStart(2, '0') + ':' + 
+    String(minutes).padStart(2, '0') + ':' + 
+    String(seconds).padStart(2, '0');
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function loadQuestions() {
+  startTimer();
+  fetch(JSON_URL).then(r => r.json()).then(data => {
+    questions = Array.isArray(data) ? data : (data.data || []);
+    renderQuestion(0);
+    renderPalette();
+  }).catch(e => $('questionText').innerText = "Failed to load questions");
+}
+
+function renderQuestion(i) {
+  if (i < 0 || i >= questions.length) return;
+  current = i;
+  const q = questions[i];
+  $('questionNumber').innerText = `Question ${i + 1} of ${questions.length}`;
+  $('questionText').innerHTML = q.question || '';
+  $('optionsContainer').innerHTML = '';
+  for (let j = 1; j <= 10; j++) {
+    const opt = q['option_' + j] || q['option' + j];
+    if (!opt) continue;
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = opt;
+    if (answers[i] == j) div.classList.add('selected');
+    div.onclick = () => { answers[i] = j; renderQuestion(i); updatePalette(); };
+    $('optionsContainer').appendChild(div);
+  }
+  $('bookmarkBtn').classList.toggle('active', bookmarks.has(i));
+  $('prevBtn').disabled = i == 0;
+  $('nextBtn').style.display = (i == questions.length - 1) ? 'none' : 'block';
+  $('submitBtn').style.display = (i == questions.length - 1) ? 'block' : 'none';
+}
+
+function updatePalette() {
+  document.querySelectorAll('.palette-btn').forEach((b, idx) => {
+    b.className = 'palette-btn';
+    if (idx === current) b.classList.add('current');
+    if (answers[idx]) b.classList.add('answered');
+    if (bookmarks.has(idx)) b.classList.add('bookmarked');
+  });
+}
+
+function renderPalette() {
+  const grid = $('paletteGrid'); 
+  grid.innerHTML = '';
+  questions.forEach((q, i) => {
+    const b = document.createElement('button');
+    b.className = 'palette-btn';
+    b.textContent = i + 1;
+    b.onclick = () => { renderQuestion(i); closePalette(); };
+    grid.appendChild(b);
+  });
+  updatePalette();
+  console.log('Total palette buttons rendered:', questions.length);
+}
+
+function showResults() {
+  stopTimer();
+  const totalTime = $('timer').textContent;
+  let correct = 0, wrong = 0;
+  questions.forEach((q, i) => {
+    if (!answers[i]) return;
+    if (String(answers[i]) === String(q.answer)) correct++;
+    else wrong++;
+  });
+  const total = questions.length;
+  let html = `<h2>Result Summary</h2>
+  <p>⏱️ Time Taken: <b>${totalTime}</b></p>
+  <p>✅ Correct: ${correct} &nbsp; ❌ Wrong: ${wrong} &nbsp; 🧾 Total: ${total}</p>
+  <hr><h3>Detailed Review</h3>`;
+  questions.forEach((q, i) => {
+    const userAns = answers[i];
+    html += `<div class="question-block" style="margin-bottom:12px;padding:10px;border-radius:8px;border:1px solid #ddd;background:var(--card);">
+    <b>Q${i + 1}.</b> ${q.question || ''}<br>`;
+    for (let j = 1; j <= 10; j++) {
+      const opt = q['option_' + j] || q['option' + j];
+      if (!opt) continue;
+      let cls = '';
+      if (String(j) === String(q.answer)) cls = 'correct';
+      else if (String(j) === String(userAns) && String(userAns) !== String(q.answer)) cls = 'wrong';
+      html += `<div class="option ${cls}">${opt}`;
+      if (String(j) === String(userAns)) html += ' <b>(Your Choice)</b>';
+      if (String(j) === String(q.answer)) html += ' ✅';
+      html += '</div>';
+    }
+    if (q.solution) html += `<div style="margin-top:6px;font-size:14px;color:#555;"><b>Explanation:</b> ${q.solution}</div>`;
+    html += '</div>';
+  });
+  html += `<div style="margin-top:15px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button onclick="downloadResults()" style="padding:10px 16px;border:none;border-radius:8px;background:var(--p1);color:white;cursor:pointer;flex:1;min-width:120px;">⬇ Download</button>
+    <button onclick="window.print()" style="padding:10px 16px;border:none;border-radius:8px;background:#6b7280;color:white;cursor:pointer;flex:1;min-width:120px;">🖨 Print</button>
+    <button onclick="restartQuiz()" style="padding:10px 16px;border:none;border-radius:8px;background:#00c853;color:white;cursor:pointer;flex:1;min-width:120px;">🔄 Restart Quiz</button>
+  </div>`;
+  $('resultSection').innerHTML = html;
+  $('quizSection').style.display = 'none';
+  $('resultSection').style.display = 'block';
+  document.querySelector('.navigation').style.display = 'none';
+  document.getElementById('paletteFab').style.display = 'none';
+  window.scrollTo(0,0);
+}
+
+function restartQuiz() {
+  answers = {};
+  bookmarks = new Set();
+  $('quizSection').style.display = 'block';
+  $('resultSection').style.display = 'none';
+  document.querySelector('.navigation').style.display = 'flex';
+  document.getElementById('paletteFab').style.display = 'flex';
+  renderQuestion(0);
+  updatePalette();
+  startTimer();
+}
+
+function downloadResults() {
+  const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'quiz_results.html'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openPalette() { 
+  $('questionPalette').classList.add('active'); 
+  $('paletteOverlay').style.display = 'block'; 
+  document.body.style.overflow = 'hidden';
+}
+function closePalette() { 
+  $('questionPalette').classList.remove('active'); 
+  $('paletteOverlay').style.display = 'none'; 
+  document.body.style.overflow = '';
+}
+
+$('prevBtn').onclick = () => renderQuestion(current - 1);
+$('nextBtn').onclick = () => renderQuestion(current + 1);
+$('submitBtn').onclick = showResults;
+$('bookmarkBtn').onclick = () => { bookmarks.has(current) ? bookmarks.delete(current) : bookmarks.add(current); renderQuestion(current); updatePalette(); };
+$('paletteFab').onclick = openPalette;
+$('paletteClose').onclick = closePalette;
+$('paletteOverlay').onclick = closePalette;
+
+// Enable palette grid scrolling
+const paletteGrid = $('paletteGrid');
+
+// Ensure palette grid is scrollable
+paletteGrid.style.overflowY = 'scroll';
+paletteGrid.style.webkitOverflowScrolling = 'touch';
+
+// Prevent body scroll when palette is open, but allow palette scroll
+document.body.addEventListener('touchmove', (e) => {
+  if ($('questionPalette').classList.contains('active')) {
+    if (!paletteGrid.contains(e.target)) {
+      e.preventDefault();
+    }
+  }
+}, { passive: false });
+
+// theme toggle
+const themeToggle = $('themeToggle');
+function setTheme(dark) { 
+  document.body.dataset.theme = dark ? 'dark' : 'light'; 
+  themeToggle.textContent = dark ? 'Light Mode' : 'Dark Mode'; 
+  localStorage.setItem('theme', dark ? 'dark' : 'light'); 
+}
+themeToggle.onclick = () => setTheme(document.body.dataset.theme !== 'dark');
+setTheme(localStorage.getItem('theme') === 'dark');
+
+// fullscreen toggle
+const fullscreenBtn = $('fullscreenBtn');
+fullscreenBtn.onclick = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log('Fullscreen error:', err);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+};
+
+// Update fullscreen button on change
+document.addEventListener('fullscreenchange', () => {
+  fullscreenBtn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+});
+
+loadQuestions();
+</script>
+
+</body>
+</html>
