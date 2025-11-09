@@ -1,22 +1,16 @@
 import os
-import time
 import json
-import logging
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import telebot
 from telebot import types
 
-logging.basicConfig(level=logging.INFO)
-
-# ---------------- CONFIG ----------------
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
-OWNER_ID = int(os.getenv("OWNER_ID", "7447651332"))
-WEB_BASE_URL = os.getenv("WEB_BASE_URL", "https://raw.githubusercontent.com/Error1234543/Sonicx/main/")
-CHANNEL_USERNAME = "@YourChannelUsername"  # replace with your Telegram channel
-# ---------------------------------------
-
+# ---------- CONFIG ----------
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+CHANNEL_ID = "@NEET_JEE_GUJ"  # Telegram channel username
 bot = telebot.TeleBot(BOT_TOKEN)
+
+JSON_FILE = "data.json"
 
 # ---------- HEALTH CHECK SERVER ----------
 class HealthHandler(BaseHTTPRequestHandler):
@@ -28,109 +22,80 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def run_health_server():
     server = HTTPServer(("0.0.0.0", 8000), HealthHandler)
-    logging.info("🌐 Health server running on port 8000")
+    print("🌐 Health-check server running on port 8000")
     server.serve_forever()
 
 threading.Thread(target=run_health_server, daemon=True).start()
-# ---------------------------------------
 
-# ---------- LOAD LOCAL JSON -----------------
+# ---------- LOAD JSON ----------
 def load_data():
-    try:
-        with open("data.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logging.error(f"❌ Cannot load data.json: {e}")
+    if not os.path.exists(JSON_FILE):
         return {}
+    with open(JSON_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-# ---------- START / REFRESH ----------------
-@bot.message_handler(commands=['start', 'refresh'])
+data = load_data()
+
+# ---------- START / CHANNEL JOIN ----------
+@bot.message_handler(commands=["start"])
 def start_menu(msg):
-    data = load_data()
-    if not data:
-        bot.reply_to(msg, "⚠️ Unable to load data.json.")
-        return
-    
-    # Join channel + Close button
+    chat_id = msg.chat.id
     kb = types.InlineKeyboardMarkup()
-    kb.add(
-        types.InlineKeyboardButton(text="📢 Join Channel", url=f"https://t.me/{CHANNEL_USERNAME.strip('@')}"),
-        types.InlineKeyboardButton(text="❌ Close", callback_data="CLOSE")
-    )
-    bot.send_message(msg.chat.id,
-                     "👋 Welcome! Please join our channel to access tests:",
-                     reply_markup=kb)
+    kb.add(types.InlineKeyboardButton(text="✅ Join Channel", url=f"https://t.me/{CHANNEL_ID[1:]}"))
+    kb.add(types.InlineKeyboardButton(text="❌ Skip", callback_data="SKIP_CHANNEL"))
+    bot.send_message(chat_id, "📢 Please join our Telegram channel to continue:", reply_markup=kb)
 
-# ---------- CALLBACK HANDLER ----------------
+# ---------- CALLBACK HANDLER ----------
 @bot.callback_query_handler(func=lambda c: True)
 def callback_handler(call):
-    data = load_data()
     try:
-        if call.data == "CLOSE":
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-            return
-        
         parts = call.data.split("|")
-        if parts[0] == "STD":
-            cat = parts[1]
-            items = data.get(cat, {})
-            kb = types.InlineKeyboardMarkup()
-            if isinstance(items, dict):
-                # STD → Subjects
-                for sub in items.keys():
-                    kb.add(types.InlineKeyboardButton(
-                        text=sub,
-                        callback_data=f"SUBJECT|{cat}|{sub}"
-                    ))
-            elif isinstance(items, list):
-                # Direct test list (Mock/Gujcet)
-                for t in items:
-                    kb.add(types.InlineKeyboardButton(
-                        text=t["label"],
-                        web_app=types.WebAppInfo(WEB_BASE_URL + t["path"])
-                    ))
-            kb.add(types.InlineKeyboardButton("⬅️ Back", callback_data="BACK_MAIN"))
-            bot.edit_message_text(f"📚 {cat} - Select:", call.message.chat.id, call.message.message_id, reply_markup=kb)
+        chat_id = call.message.chat.id
 
-        elif parts[0] == "SUBJECT":
-            cat, subject = parts[1], parts[2]
-            tests = data.get(cat, {}).get(subject, [])
+        if call.data == "SKIP_CHANNEL":
+            # Show class menu after channel prompt
             kb = types.InlineKeyboardMarkup()
-            for t in tests:
+            for std in data.keys():
+                kb.add(types.InlineKeyboardButton(text=std, callback_data=f"STD|{std}"))
+            bot.edit_message_text("📘 Select Class:", chat_id, call.message.message_id, reply_markup=kb)
+
+        elif parts[0] == "STD":
+            std = parts[1]
+            kb = types.InlineKeyboardMarkup()
+            for subj in data[std].keys():
                 kb.add(types.InlineKeyboardButton(
-                    text=t["label"],
-                    web_app=types.WebAppInfo(WEB_BASE_URL + t["path"])
-                ))
-            kb.add(types.InlineKeyboardButton("⬅️ Back", callback_data=f"STD|{cat}"))
-            bot.edit_message_text(f"🧪 {cat} → {subject} - Select Test:", call.message.chat.id, call.message.message_id, reply_markup=kb)
+                    text=subj, callback_data=f"SUBJ|{std}|{subj}"))
+            kb.add(types.InlineKeyboardButton("⬅️ Back", callback_data="BACK_MAIN"))
+            bot.edit_message_text(f"📘 {std}\nSelect Subject:", chat_id, call.message.message_id, reply_markup=kb)
+
+        elif parts[0] == "SUBJ":
+            std, subj = parts[1], parts[2]
+            kb = types.InlineKeyboardMarkup()
+            for t in data[std][subj]:
+                file_path = t["path"]
+                if os.path.exists(file_path):
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        html_content = f.read()
+                    kb.add(types.InlineKeyboardButton(
+                        text=t["label"], web_app=types.WebAppInfo("data:text/html," + html_content)))
+                else:
+                    kb.add(types.InlineKeyboardButton(text=f"{t['label']} ❌ Missing", callback_data="MISSING"))
+            kb.add(types.InlineKeyboardButton("⬅️ Back", callback_data=f"STD|{std}"))
+            bot.edit_message_text(f"🧪 {std} → {subj}\nSelect Test:", chat_id, call.message.message_id, reply_markup=kb)
 
         elif parts[0] == "BACK_MAIN":
-            start_menu(call.message)
+            kb = types.InlineKeyboardMarkup()
+            for std in data.keys():
+                kb.add(types.InlineKeyboardButton(text=std, callback_data=f"STD|{std}"))
+            bot.edit_message_text("📘 Select Class:", chat_id, call.message.message_id, reply_markup=kb)
+
         else:
-            bot.answer_callback_query(call.id, "⚠️ Unknown action")
-            
+            bot.answer_callback_query(call.id, "Unknown action")
+
     except Exception as e:
-        logging.error(f"Callback error: {e}")
         bot.answer_callback_query(call.id, "⚠️ Something went wrong.")
+        print("Callback error:", e)
 
-# ---------- HELP --------------------------
-@bot.message_handler(commands=['help'])
-def help_cmd(m):
-    text = (
-        "📚 *Study Bot Help*\n\n"
-        "• /start - Show main menu\n"
-        "• /refresh - Reload JSON\n"
-        "• Add new tests by updating data.json in your repo.\n\n"
-        "Bot auto-syncs from local JSON 🔄"
-    )
-    bot.send_message(m.chat.id, text, parse_mode="Markdown")
-
-# ---------- POLLING ------------------------
-if __name__ == "__main__":
-    logging.info("🤖 Bot started and running...")
-    while True:
-        try:
-            bot.infinity_polling(timeout=30, long_polling_timeout=50)
-        except Exception as e:
-            logging.error(f"Polling error: {e}")
-            time.sleep(5)
+# ---------- RUN BOT ----------
+print("🤖 Bot started")
+bot.infinity_polling()
