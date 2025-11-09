@@ -6,7 +6,7 @@ import telebot
 from telebot import types
 
 # ---------- CONFIG ----------
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+BOT_TOKEN = "8510670200:AAGN0wkvB8yYOOvsU3Jrf4pWAS5q0zR3CGI"
 CHANNEL_ID = "@NEET_JEE_GUJ"  # Telegram channel username
 bot = telebot.TeleBot(BOT_TOKEN)
 
