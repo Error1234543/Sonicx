@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID", "7447651332"))
 WEB_BASE_URL = os.getenv("WEB_BASE_URL", "https://raw.githubusercontent.com/Error1234543/Sonicx/main/")
-CHANNEL_USERNAME = "@YourChannelUsername"  # replace with your Telegram channel
+CHANNEL_USERNAME = "@NEET_JEE_GUJ"  # replace with your Telegram channel
 # ---------------------------------------
 
 bot = telebot.TeleBot(BOT_TOKEN)
