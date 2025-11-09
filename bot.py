@@ -2,6 +2,8 @@ import os
 import time
 import json
 import logging
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import telebot
 from telebot import types
 
@@ -11,10 +13,26 @@ logging.basicConfig(level=logging.INFO)
 BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID", "7447651332"))
 WEB_BASE_URL = os.getenv("WEB_BASE_URL", "https://raw.githubusercontent.com/Error1234543/Sonicx/main/")
-CHANNEL_USERNAME = "@NEET_JEE_GUJ"  # replace with your Telegram channel
+CHANNEL_USERNAME = "@YourChannelUsername"  # replace with your Telegram channel
 # ---------------------------------------
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# ---------- HEALTH CHECK SERVER ----------
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def run_health_server():
+    server = HTTPServer(("0.0.0.0", 8000), HealthHandler)
+    logging.info("🌐 Health server running on port 8000")
+    server.serve_forever()
+
+threading.Thread(target=run_health_server, daemon=True).start()
+# ---------------------------------------
 
 # ---------- LOAD LOCAL JSON -----------------
 def load_data():
@@ -109,7 +127,7 @@ def help_cmd(m):
 
 # ---------- POLLING ------------------------
 if __name__ == "__main__":
-    logging.info("🤖 Bot started")
+    logging.info("🤖 Bot started and running...")
     while True:
         try:
             bot.infinity_polling(timeout=30, long_polling_timeout=50)
